@@ -15,7 +15,7 @@ Kademlia provides the peer-to-peer overlay — every node maintains a routing ta
                          │             node (bin)               │
                          │  config loading · bootstrap · serve  │
                          │         graceful shutdown            │
-                         └──────────┬──────────┬──────────────-─┘
+                         └──────────┬──────────┬────────────────┘
                                     │          │
                ┌────────────────────┘          └──────────────────┐
                ▼                                                  ▼

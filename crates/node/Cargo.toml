@@ -1,0 +1,19 @@
+[package]
+name = "dynamo-node"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+dynamo-common = { workspace = true }
+dynamo-config = { workspace = true }
+dynamo-kad = { workspace = true }
+dynamo-kv = { workspace = true }
+dynamo-storage = { workspace = true }
+dynamo-net = { workspace = true }
+dynamo-metrics = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[lints]
+workspace = true

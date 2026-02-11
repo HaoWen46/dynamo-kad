@@ -1,0 +1,12 @@
+[package]
+name = "dynamo-proto"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+tonic = { workspace = true }
+prost = { workspace = true }
+prost-types = { workspace = true }
+
+[build-dependencies]
+tonic-build = { workspace = true }

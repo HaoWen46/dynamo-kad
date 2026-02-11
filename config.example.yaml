@@ -1,0 +1,40 @@
+# dynamo-kad node configuration
+# Copy this file and adjust for your deployment.
+
+# Address this node listens on for gRPC traffic.
+listen: "127.0.0.1:7000"
+
+# Bootstrap seed addresses (other nodes to connect to on startup).
+# Leave empty to run as a standalone node.
+seeds:
+  - "127.0.0.1:7001"
+  - "127.0.0.1:7002"
+
+# Optional: Prometheus metrics HTTP port.
+# When set, exposes GET /metrics on this port.
+# metrics_port: 9090
+
+# Kademlia DHT settings
+kademlia:
+  k: 20                       # Bucket size (number of contacts per bucket)
+  alpha: 3                    # Lookup parallelism (concurrent RPCs per round)
+  rpc_timeout_ms: 5000        # RPC timeout in milliseconds
+  refresh_interval_secs: 3600 # Bucket refresh interval in seconds
+  max_records: 10000          # Maximum DHT records stored locally
+
+# Dynamo-style KV replication settings
+kv:
+  n: 3                              # Replication factor
+  r: 2                              # Read quorum
+  w: 2                              # Write quorum
+  read_timeout_ms: 5000             # Read operation timeout
+  write_timeout_ms: 5000            # Write operation timeout
+  read_repair: true                 # Repair stale replicas on read path
+  hinted_handoff: true              # Store hints for unavailable replicas
+  hint_delivery_interval_secs: 30   # How often to attempt hint delivery
+  max_hints_per_cycle: 100          # Max hints delivered per cycle
+
+# Storage engine settings
+storage:
+  data_dir: data              # Directory for WAL and data files
+  fsync: batch                # Fsync policy: "always", "batch", or "none"

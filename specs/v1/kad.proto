@@ -1,0 +1,76 @@
+syntax = "proto3";
+package dynamo.kad;
+
+import "common.proto";
+
+// Kademlia DHT RPC service.
+//
+// Implements the four core Kademlia RPCs: PING, FIND_NODE, FIND_VALUE, STORE.
+// All RPCs include sender info so the responder can update its routing table.
+service Kademlia {
+  // Health check: verifies the remote node is alive and learns its identity.
+  rpc Ping(PingRequest) returns (PingResponse);
+  // Iterative node lookup: returns the k closest nodes to the target ID.
+  rpc FindNode(FindNodeRequest) returns (FindNodeResponse);
+  // Value lookup: returns the value if stored, otherwise the k closest nodes.
+  rpc FindValue(FindValueRequest) returns (FindValueResponse);
+  // Store a key-value pair on the remote node.
+  rpc Store(StoreRequest) returns (StoreResponse);
+}
+
+message PingRequest {
+  // The node initiating the ping.
+  dynamo.common.NodeInfo sender = 1;
+}
+
+message PingResponse {
+  // The node responding to the ping.
+  dynamo.common.NodeInfo responder = 1;
+}
+
+message FindNodeRequest {
+  // The node initiating the lookup.
+  dynamo.common.NodeInfo sender = 1;
+  // The 160-bit ID to look up in the routing table.
+  dynamo.common.NodeId target = 2;
+}
+
+message FindNodeResponse {
+  // The node responding to the lookup.
+  dynamo.common.NodeInfo responder = 1;
+  // Up to k nodes closest to the target, sorted by XOR distance.
+  repeated dynamo.common.NodeInfo closest = 2;
+}
+
+message FindValueRequest {
+  // The node initiating the value lookup.
+  dynamo.common.NodeInfo sender = 1;
+  // The key to search for (a 160-bit ID).
+  dynamo.common.NodeId key = 2;
+}
+
+message FindValueResponse {
+  // The node responding to the lookup.
+  dynamo.common.NodeInfo responder = 1;
+  // Either the stored value or the closest known nodes.
+  oneof result {
+    // The value associated with the key, if found.
+    bytes value = 2;
+    // If not found, the k closest nodes to continue the iterative lookup.
+    FindNodeResponse closest = 3;
+  }
+}
+
+message StoreRequest {
+  // The node requesting storage.
+  dynamo.common.NodeInfo sender = 1;
+  // The key under which to store the value.
+  dynamo.common.NodeId key = 2;
+  // The value to store.
+  bytes value = 3;
+}
+
+message StoreResponse {
+  // The node that stored the value.
+  dynamo.common.NodeInfo responder = 1;
+}

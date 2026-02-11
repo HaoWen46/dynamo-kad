@@ -1,0 +1,134 @@
+syntax = "proto3";
+package dynamo.kv;
+
+import "common.proto";
+
+// Client-facing KV service.
+//
+// Provides Dynamo-style eventually consistent key-value operations.
+// Reads may return multiple versions (siblings) when concurrent writes
+// are detected. Clients should pass the context from a GET back into
+// a subsequent PUT to resolve conflicts.
+service KvService {
+  // Write a value for a key. Returns the updated vector clock context.
+  rpc Put(PutRequest) returns (PutResponse);
+  // Read all versions for a key. May return siblings from concurrent writes.
+  rpc Get(GetRequest) returns (GetResponse);
+  // Tombstone-delete a key. Requires the context from a prior GET.
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
+
+// Internal replica-to-replica RPCs.
+//
+// Used by the coordinator to fan out writes/reads to replica nodes.
+// Not intended for direct client use.
+service ReplicaService {
+  // Store a versioned value on this replica.
+  rpc ReplicaPut(ReplicaPutRequest) returns (ReplicaPutResponse);
+  // Retrieve all versions for a key from this replica.
+  rpc ReplicaGet(ReplicaGetRequest) returns (ReplicaGetResponse);
+  // Deliver a hinted-handoff value to its intended recipient.
+  rpc HintDeliver(HintDeliverRequest) returns (HintDeliverResponse);
+}
+
+// --- Client-facing messages ---
+
+message PutRequest {
+  // The key to write.
+  string key = 1;
+  // The value payload.
+  bytes value = 2;
+  // Causal context from a previous GET (for conflict resolution).
+  // Omit on first write to create a new entry.
+  dynamo.common.VectorClock context = 3;
+  // Write quorum override (0 = use server default W).
+  uint32 w = 4;
+  // Timeout override in milliseconds (0 = use server default).
+  uint32 timeout_ms = 5;
+}
+
+message PutResponse {
+  // Updated vector clock after the write.
+  dynamo.common.VectorClock context = 1;
+  // Whether the write achieved quorum.
+  bool success = 2;
+}
+
+message GetRequest {
+  // The key to read.
+  string key = 1;
+  // Read quorum override (0 = use server default R).
+  uint32 r = 2;
+  // Timeout override in milliseconds (0 = use server default).
+  uint32 timeout_ms = 3;
+}
+
+message GetResponse {
+  // All versions (siblings) for this key.
+  // Empty if the key does not exist.
+  repeated dynamo.common.VersionedValue versions = 1;
+  // Merged vector clock context to echo back on subsequent PUT.
+  dynamo.common.VectorClock context = 2;
+  // Whether the read achieved quorum.
+  bool success = 3;
+}
+
+message DeleteRequest {
+  // The key to delete.
+  string key = 1;
+  // Causal context from a prior GET (required for tombstone writes).
+  dynamo.common.VectorClock context = 2;
+  // Write quorum override (0 = use server default W).
+  uint32 w = 3;
+  // Timeout override in milliseconds (0 = use server default).
+  uint32 timeout_ms = 4;
+}
+
+message DeleteResponse {
+  // Updated vector clock after the tombstone write.
+  dynamo.common.VectorClock context = 1;
+  // Whether the delete achieved quorum.
+  bool success = 2;
+}
+
+// --- Replica-internal messages ---
+
+message ReplicaPutRequest {
+  // The key to store on this replica.
+  string key = 1;
+  // The versioned value (includes vector clock and tombstone flag).
+  dynamo.common.VersionedValue versioned = 2;
+  // Idempotency token to prevent duplicate writes.
+  string write_id = 3;
+}
+
+message ReplicaPutResponse {
+  // The vector clock as stored on this replica.
+  dynamo.common.VectorClock stored_vclock = 1;
+  // Whether the write succeeded locally.
+  bool success = 2;
+}
+
+message ReplicaGetRequest {
+  // The key to read from this replica.
+  string key = 1;
+}
+
+message ReplicaGetResponse {
+  // All local versions for the key.
+  repeated dynamo.common.VersionedValue versions = 1;
+}
+
+message HintDeliverRequest {
+  // The node that was originally supposed to receive this write.
+  dynamo.common.NodeId target_node = 1;
+  // The key for the hinted value.
+  string key = 2;
+  // The versioned value to deliver.
+  dynamo.common.VersionedValue versioned = 3;
+}
+
+message HintDeliverResponse {
+  // Whether the hint was accepted and stored.
+  bool success = 1;
+}

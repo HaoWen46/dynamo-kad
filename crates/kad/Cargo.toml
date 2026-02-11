@@ -1,0 +1,25 @@
+[package]
+name = "dynamo-kad"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+dynamo-common = { workspace = true }
+tokio = { workspace = true }
+sha1 = { workspace = true }
+serde = { workspace = true }
+rand = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+bytes = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros"] }
+tokio-test = { workspace = true }
+rand = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,48 @@
+syntax = "proto3";
+package dynamo.common;
+
+// A 160-bit node or key identifier (20 bytes).
+// Uses SHA-1 hashing to map arbitrary data into the Kademlia ID space.
+message NodeId {
+  // Raw 20-byte identifier.
+  bytes raw = 1;
+}
+
+// Network-addressable node descriptor.
+// Combines a node's identity with its reachable address.
+message NodeInfo {
+  // The node's 160-bit Kademlia identifier.
+  NodeId id = 1;
+  // Socket address in "host:port" format (e.g., "127.0.0.1:7000").
+  string address = 2;
+}
+
+// Vector clock for tracking causal ordering of writes.
+// Each entry maps a node identifier (hex-encoded NodeId) to a monotonically
+// increasing counter. Two vector clocks are concurrent (siblings) when neither
+// dominates the other.
+message VectorClock {
+  // Node hex string -> logical counter.
+  map<string, uint64> entries = 1;
+}
+
+// A versioned value with its causal context.
+// Returned by reads and echoed back on writes for conflict resolution.
+message VersionedValue {
+  // The stored payload bytes.
+  bytes value = 1;
+  // Vector clock representing the causal history of this version.
+  VectorClock vclock = 2;
+  // Wall-clock timestamp (milliseconds since epoch) when written.
+  int64 timestamp_ms = 3;
+  // If true, this version represents a deletion (tombstone).
+  bool tombstone = 4;
+}
+
+// Common error wrapper for RPC error responses.
+message Error {
+  // Application-specific error code.
+  int32 code = 1;
+  // Human-readable error description.
+  string message = 2;
+}

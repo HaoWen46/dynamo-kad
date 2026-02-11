@@ -1,0 +1,83 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/common",
+    "crates/proto",
+    "crates/config",
+    "crates/storage",
+    "crates/kad",
+    "crates/kv",
+    "crates/net",
+    "crates/admin",
+    "crates/metrics",
+    "crates/node",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.80"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# gRPC
+tonic = "0.12"
+prost = "0.13"
+prost-types = "0.13"
+tonic-build = "0.12"
+
+# Hashing -- SHA-1 for 160-bit Kademlia ID space
+sha1 = "0.10"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+
+# Utilities
+rand = "0.8"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+bytes = "1"
+async-trait = "0.1"
+futures = "0.3"
+uuid = { version = "1", features = ["v4"] }
+hex = "0.4"
+crc32fast = "1"
+
+# Metrics
+prometheus = "0.13"
+
+# HTTP (metrics endpoint)
+hyper = { version = "1", features = ["server", "http1"] }
+http-body-util = "0.1"
+hyper-util = { version = "0.1", features = ["tokio"] }
+
+# Benchmarking
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# Testing
+tokio-test = "0.4"
+tempfile = "3"
+
+# Internal crates
+dynamo-common = { path = "crates/common" }
+dynamo-proto = { path = "crates/proto" }
+dynamo-config = { path = "crates/config" }
+dynamo-storage = { path = "crates/storage" }
+dynamo-kad = { path = "crates/kad" }
+dynamo-kv = { path = "crates/kv" }
+dynamo-net = { path = "crates/net" }
+dynamo-admin = { path = "crates/admin" }
+dynamo-metrics = { path = "crates/metrics" }
+
+[workspace.lints.rust]
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+needless_pass_by_value = "warn"
+redundant_closure_for_method_calls = "warn"

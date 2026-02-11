@@ -1,0 +1,48 @@
+syntax = "proto3";
+package dynamo.admin;
+
+import "common.proto";
+
+// Administrative service for monitoring and operations.
+//
+// Provides health checks, performance statistics, and a view of the
+// node's routing table for operational visibility.
+service AdminService {
+  // Check if the node is healthy and get basic info (uptime, node ID).
+  rpc Health(HealthRequest) returns (HealthResponse);
+  // Retrieve operational statistics (routing table size, RPC counts).
+  rpc GetStats(StatsRequest) returns (StatsResponse);
+  // List all nodes known to this node's Kademlia routing table.
+  rpc ClusterView(ClusterViewRequest) returns (ClusterViewResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  // Whether the node considers itself healthy.
+  bool healthy = 1;
+  // This node's hex-encoded 160-bit identifier.
+  string node_id = 2;
+  // Seconds since the node started.
+  uint64 uptime_secs = 3;
+}
+
+message StatsRequest {}
+
+message StatsResponse {
+  // Number of nodes in the Kademlia routing table.
+  uint64 routing_table_size = 1;
+  // Number of DHT records stored locally.
+  uint64 record_count = 2;
+  // Total outbound RPCs sent since startup.
+  uint64 total_rpcs_sent = 3;
+  // Total inbound RPCs received since startup.
+  uint64 total_rpcs_received = 4;
+}
+
+message ClusterViewRequest {}
+
+message ClusterViewResponse {
+  // All nodes known to this node's routing table.
+  repeated dynamo.common.NodeInfo known_nodes = 1;
+}

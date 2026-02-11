@@ -15,7 +15,7 @@ Kademlia provides the peer-to-peer overlay — every node maintains a routing ta
                          │             node (bin)               │
                          │  config loading · bootstrap · serve  │
                          │         graceful shutdown            │
-                         └──────────┬──────────┬───────────────┘
+                         └──────────┬──────────┬──────────────-─┘
                                     │          │
                ┌────────────────────┘          └──────────────────┐
                ▼                                                  ▼
@@ -23,11 +23,11 @@ Kademlia provides the peer-to-peer overlay — every node maintains a routing ta
   │       net (lib)        │                        │    metrics (lib)     │
   │  tonic gRPC transport  │                        │  Prometheus counters │
   │  4 services · 13 RPCs  │                        │  + HTTP /metrics     │
-  └───┬────┬────┬────┬─────┘                        └──────────────────────┘
-      │    │    │    │
-      │    │    │    └──────────────────────┐
-      ▼    │    ▼                           ▼
-  ┌────────┤ ┌────────────────┐   ┌──────────────────┐
+  └───┬────────────────────┘                        └──────────────────────┘
+      │         │    │
+      │         │    └──────────────────────┐
+      ▼         ▼                           ▼
+  ┌────────┐ ┌────────────────┐   ┌──────────────────┐
   │  kad   │ │   kv (lib)     │   │   admin (lib)    │
   │ (lib)  │ │  coordinator   │   │   re-exports     │
   │        │ │  vclock·merkle │   │   AdminService   │
@@ -78,16 +78,16 @@ Kademlia provides the peer-to-peer overlay — every node maintains a routing ta
 
 ## Milestones
 
-| Milestone | Status | Scope |
-|-----------|--------|-------|
-| **M0** — Scaffolding | Done | Workspace, common crate, protobuf definitions |
-| **M1** — Kademlia Core | Done | K-buckets, iterative lookup, record store, SimTransport tests |
-| **M2** — KV MVP + Networking | Done | Storage engine, KV coordinator, gRPC transport, integration tests |
-| **M3** — Dynamo Semantics | Done | Vector clocks, quorum R/W, read repair, hinted handoff |
-| **M4** — Repair & Handoff | Done | Hint delivery, Merkle tree anti-entropy |
-| **M5** — Bench & Chaos | Done | Prometheus metrics, Criterion benchmarks, chaos transport, multi-node chaos integration |
-| **M6** — Polish | Done | Workspace lints, rustfmt, graceful shutdown, configurable parameters, Justfile, docs |
-| **M7** — Wire Loose Ends | Done | Periodic bucket refresh, metrics wiring, per-request quorum overrides, config validation, CI |
+| Milestone                    | Status | Scope                                                                                        |
+| ---------------------------- | ------ | -------------------------------------------------------------------------------------------- |
+| **M0** — Scaffolding         | Done   | Workspace, common crate, protobuf definitions                                                |
+| **M1** — Kademlia Core       | Done   | K-buckets, iterative lookup, record store, SimTransport tests                                |
+| **M2** — KV MVP + Networking | Done   | Storage engine, KV coordinator, gRPC transport, integration tests                            |
+| **M3** — Dynamo Semantics    | Done   | Vector clocks, quorum R/W, read repair, hinted handoff                                       |
+| **M4** — Repair & Handoff    | Done   | Hint delivery, Merkle tree anti-entropy                                                      |
+| **M5** — Bench & Chaos       | Done   | Prometheus metrics, Criterion benchmarks, chaos transport, multi-node chaos integration      |
+| **M6** — Polish              | Done   | Workspace lints, rustfmt, graceful shutdown, configurable parameters, Justfile, docs         |
+| **M7** — Wire Loose Ends     | Done   | Periodic bucket refresh, metrics wiring, per-request quorum overrides, config validation, CI |
 
 ---
 
@@ -159,21 +159,21 @@ Requires [just](https://github.com/casey/just) for task runner recipes.
 
 **152 tests** across 7 crates using three layers of test infrastructure:
 
-| Layer | Transport | Purpose |
-|-------|-----------|---------|
-| Unit | `SimulatedTransport` / `InMemReplicaClient` | Routing, lookup, vclock, merkle, quorum logic |
-| Chaos | `ChaosTransport` / `ChaosReplicaClient` | Network partitions, random failures, latency injection |
-| Integration | `GrpcTransport` / `GrpcReplicaClient` | End-to-end gRPC with real tonic servers |
+| Layer       | Transport                                   | Purpose                                                |
+| ----------- | ------------------------------------------- | ------------------------------------------------------ |
+| Unit        | `SimulatedTransport` / `InMemReplicaClient` | Routing, lookup, vclock, merkle, quorum logic          |
+| Chaos       | `ChaosTransport` / `ChaosReplicaClient`     | Network partitions, random failures, latency injection |
+| Integration | `GrpcTransport` / `GrpcReplicaClient`       | End-to-end gRPC with real tonic servers                |
 
-| Crate | Tests | Highlights |
-|-------|------:|------------|
-| `common` | 13 | XOR distance properties, bucket indexing |
-| `config` | 7 | YAML parsing, validation (R>N, W>N, zero values) |
-| `storage` | 25 | WAL CRC integrity, crash replay, memtable versioning |
-| `kad` | 43 | K-bucket LRU, lookup convergence, bootstrap, refresh, chaos |
-| `kv` | 53 | Quorum R/W, vclock ordering, read repair, hinted handoff, 5-node chaos |
-| `net` | 8 | gRPC health, PUT/GET round-trip, multi-node bootstrap |
-| `metrics` | 3 | Counter increments, histogram recording, Prometheus encoding |
+| Crate     | Tests | Highlights                                                             |
+| --------- | ----: | ---------------------------------------------------------------------- |
+| `common`  |    13 | XOR distance properties, bucket indexing                               |
+| `config`  |     7 | YAML parsing, validation (R>N, W>N, zero values)                       |
+| `storage` |    25 | WAL CRC integrity, crash replay, memtable versioning                   |
+| `kad`     |    43 | K-bucket LRU, lookup convergence, bootstrap, refresh, chaos            |
+| `kv`      |    53 | Quorum R/W, vclock ordering, read repair, hinted handoff, 5-node chaos |
+| `net`     |     8 | gRPC health, PUT/GET round-trip, multi-node bootstrap                  |
+| `metrics` |     3 | Counter increments, histogram recording, Prometheus encoding           |
 
 ---
 
@@ -181,12 +181,12 @@ Requires [just](https://github.com/casey/just) for task runner recipes.
 
 19 parameters configurable via YAML. See [`config.example.yaml`](config.example.yaml).
 
-| Section | Key parameters | Defaults |
-|---------|---------------|----------|
+| Section      | Key parameters                                          | Defaults                              |
+| ------------ | ------------------------------------------------------- | ------------------------------------- |
 | **Kademlia** | `k`, `alpha`, `rpc_timeout_ms`, `refresh_interval_secs` | k=20, alpha=3, 5s timeout, 1h refresh |
-| **KV** | `n`, `r`, `w`, `read_repair`, `hinted_handoff` | N=3, R=2, W=2, both enabled |
-| **Storage** | `data_dir`, `fsync` | `data/`, batch fsync |
-| **Node** | `listen`, `seeds`, `metrics_port` | Required listen address |
+| **KV**       | `n`, `r`, `w`, `read_repair`, `hinted_handoff`          | N=3, R=2, W=2, both enabled           |
+| **Storage**  | `data_dir`, `fsync`                                     | `data/`, batch fsync                  |
+| **Node**     | `listen`, `seeds`, `metrics_port`                       | Required listen address               |
 
 ---
 

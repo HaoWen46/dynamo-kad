@@ -21,3 +21,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Generated deployment configs (from dynamoctl gen-config-local)
+/deploy/generated/

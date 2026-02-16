@@ -86,7 +86,7 @@ If any port is in use, either:
 ./deploy/dynamoctl.sh distribute
 ```
 
-Copies the binary to `/tmp2/dynamo-kad/bin/dynamo-node` on all 10 nodes via scp (runs in parallel).
+Copies the binary to `/tmp2/b11902156/dynamo-kad/bin/dynamo-node` on all 10 nodes via scp (runs in parallel).
 
 ### 4. Generate & distribute configs
 
@@ -94,7 +94,7 @@ Copies the binary to `/tmp2/dynamo-kad/bin/dynamo-node` on all 10 nodes via scp 
 ./deploy/dynamoctl.sh gen-config
 ```
 
-Creates `/tmp2/dynamo-kad/config/node.yaml` on each node with the correct `listen` address, seeds, and paths.
+Creates `/tmp2/b11902156/dynamo-kad/config/node.yaml` on each node with the correct `listen` address, seeds, and paths.
 
 To preview configs without SSH (just writes to `deploy/generated/`):
 ```bash
@@ -144,7 +144,7 @@ Then waits 5s for Kademlia bootstrap.
 
 ```bash
 ./deploy/dynamoctl.sh clean   # removes data/logs (must stop first)
-./deploy/dynamoctl.sh nuke    # removes entire /tmp2/dynamo-kad (asks YES)
+./deploy/dynamoctl.sh nuke    # removes entire /tmp2/b11902156/dynamo-kad (asks YES)
 ```
 
 ---
@@ -226,11 +226,11 @@ storage.data_dir: "/tmp2/..."   # Absolute path, local disk
 | `ReplicaService` | ReplicaPut, ReplicaGet, HintDeliver | Replication internal |
 
 ### Process lifecycle
-- Binary: `/tmp2/dynamo-kad/bin/dynamo-node`
-- Config: `/tmp2/dynamo-kad/config/node.yaml`
-- Data: `/tmp2/dynamo-kad/data/` (WAL + hints)
-- Logs: `/tmp2/dynamo-kad/logs/dynamo-node.log`
-- PID: `/tmp2/dynamo-kad/dynamo-node.pid`
+- Binary: `/tmp2/b11902156/dynamo-kad/bin/dynamo-node`
+- Config: `/tmp2/b11902156/dynamo-kad/config/node.yaml`
+- Data: `/tmp2/b11902156/dynamo-kad/data/` (WAL + hints)
+- Logs: `/tmp2/b11902156/dynamo-kad/logs/dynamo-node.log`
+- PID: `/tmp2/b11902156/dynamo-kad/dynamo-node.pid`
 - Shutdown: `kill -INT` (SIGINT → graceful tokio shutdown)
 - Node ID: randomly generated each start (no persistent identity)
 

@@ -181,15 +181,19 @@ cmd_build_remote() {
         log_info "Auto-detected remote project path: ${remote_proj}"
     fi
 
-    log_step "Building on ${build_node} (remote)"
+    # Build with CARGO_TARGET_DIR on local disk to avoid NFS quota issues.
+    local target_dir="${REMOTE_BASE}/cargo-target"
+
+    log_step "Building on ${build_node} (remote, target → ${target_dir})"
     ssh_node "${build_node}" "
         source \$HOME/.cargo/env 2>/dev/null || true
+        mkdir -p '${target_dir}'
         cd '${remote_proj}' || { echo 'ERROR: project dir not found'; exit 1; }
-        cargo build --release -p dynamo-node 2>&1
+        CARGO_TARGET_DIR='${target_dir}' cargo build --release -p dynamo-node 2>&1
     "
 
-    # Verify binary exists via the same remote path
-    local remote_binary="${remote_proj}/target/release/dynamo-node"
+    # Verify binary exists
+    local remote_binary="${target_dir}/release/dynamo-node"
     if ! ssh_node "${build_node}" "test -f '${remote_binary}'"; then
         log_error "Binary not found at ${build_node}:${remote_binary}"
         exit 1
@@ -209,13 +213,25 @@ cmd_distribute() {
     # If REMOTE_BINARY is set (from build-remote), copy from NFS on the
     # remote side.  Otherwise scp from local.
     if [[ -n "${REMOTE_BINARY:-}" ]]; then
-        log_step "Distributing binary to ${#NODES[@]} nodes (remote copy from NFS)"
+        # Binary was built remotely on BUILD_NODE.  /tmp2 is local per-node,
+        # so we scp -3 (relay through localhost) from build node to each node.
+        log_step "Distributing binary to ${#NODES[@]} nodes (from ${BUILD_NODE})"
         local pids=() failures=0
 
         for ip in "${NODES[@]}"; do
             (
-                ssh_node "${ip}" "mkdir -p ${REMOTE_BIN} && cp '${REMOTE_BINARY}' ${REMOTE_BIN}/dynamo-node && chmod +x ${REMOTE_BIN}/dynamo-node"
-                log_info "${ip}  binary copied (NFS→local)"
+                ssh_node "${ip}" "mkdir -p ${REMOTE_BIN}"
+                if [[ "${ip}" == "${BUILD_NODE}" ]]; then
+                    # Same node: just cp
+                    ssh_node "${ip}" "cp '${REMOTE_BINARY}' ${REMOTE_BIN}/dynamo-node && chmod +x ${REMOTE_BIN}/dynamo-node"
+                else
+                    # shellcheck disable=SC2086
+                    scp ${SSH_OPTS} -q -3 \
+                        "${SSH_USER}@${BUILD_NODE}:${REMOTE_BINARY}" \
+                        "${SSH_USER}@${ip}:${REMOTE_BIN}/dynamo-node"
+                    ssh_node "${ip}" "chmod +x ${REMOTE_BIN}/dynamo-node"
+                fi
+                log_info "${ip}  binary copied"
             ) &
             pids+=($!)
         done

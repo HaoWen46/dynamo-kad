@@ -1,0 +1,10 @@
+Concurrent Throughput Results
+==============================
+Clients: 5
+Ops per client: 50
+Total operations: 250 PUTs
+Total wall-clock time: 5353 ms
+Aggregate throughput: 46.7 ops/sec
+Successes: 250/250
+Latency stats (ms): min=60,max=99,mean=69.0,median=69.0,p95=76,p99=90,stdev=4.8
+Quorum: W=2, R=2, N=3

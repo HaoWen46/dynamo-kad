@@ -1,0 +1,8 @@
+phase,description,metric,value
+pre_kill,routing_table_peers,count,10
+during_downtime,keys_written,count,30
+post_rejoin,routing_table_peers,count,10
+post_rejoin,keys_readable_from_target,count,30
+post_rejoin,keys_not_found_from_target,count,0
+post_rejoin,keys_readable_from_other,count,30
+post_rejoin,hints_delivered,count,0

@@ -1,0 +1,8 @@
+Throughput Results
+==================
+Total operations: 200 PUTs
+Total time: 40416 ms
+Throughput: 4.9 ops/sec
+Successes: 199/200
+Quorum: W=2, R=2, N=3
+Value size: ~100 bytes

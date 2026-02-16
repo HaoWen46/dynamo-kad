@@ -1,0 +1,9 @@
+Fault Tolerance Results
+=======================
+Quorum: W=2, R=2, N=3
+
+Phase                   Nodes Alive   PUT success   GET success
+Baseline (all up)       10/10         20/20         -
+1 node killed           9/10          19/20         20/20
+3 nodes killed          7/10          16/20         17/20
+All restored            10/10         -              20/20

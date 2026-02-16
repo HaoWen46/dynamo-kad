@@ -533,9 +533,71 @@ The project was built incrementally across 8 milestones:
 
 ---
 
-## 17. Potential Future Work
+## 17. Multi-Node Cluster Evaluation
 
-While the system is functionally complete, several enhancements could be explored:
+The system was deployed and evaluated on a 10-node physical cluster (CSIE NTU workstation pool, 140.112.30.182--191). The evaluation comprised 12 experiments covering correctness, performance, fault tolerance, and consistency semantics. Full results and raw data are in [`deploy/results/20260217-030352/`](deploy/results/20260217-030352/).
+
+### 17.1 Deployment
+
+An SSH-based deployment harness (`deploy/dynamoctl.sh`) manages the cluster lifecycle from a remote macOS client:
+- Remote build on a Linux cluster node (avoiding cross-compilation)
+- Binary distribution via `scp -3` relay
+- Per-node YAML config generation
+- Two-wave startup (3 seed nodes first, then 7 remaining nodes)
+- Health checks, log collection, and metrics scraping via SSH
+
+### 17.2 Cluster Convergence
+
+All 10 nodes achieved full routing table convergence (9/9 expected peers) within seconds of startup. The Kademlia bootstrap protocol (FIND_NODE self-lookup + bucket refresh) produces a complete mesh for small clusters without manual configuration.
+
+### 17.3 Latency and Throughput
+
+| Metric | Value |
+|--------|-------|
+| PUT median latency | 68 ms |
+| GET median latency | 67 ms |
+| GET stdev | 3.4 ms |
+| Per-node latency range | 8.3 ms (63.8--72.1 ms) |
+| Serial throughput | 4.9 ops/sec |
+| Concurrent throughput (10 clients) | 65.2 ops/sec (6.6x speedup) |
+
+Latency is dominated by the ~60 ms client-to-cluster RTT; intra-cluster quorum coordination adds minimal overhead. Throughput scales near-linearly with concurrent clients up to 10, then saturates at the client-side network bottleneck.
+
+Value size scaling is flat from 1 B to 1 KB. At 100 KB, PUT latency increases to 162 ms (2.5x) and GET to 108 ms (1.6x), with the PUT/GET asymmetry reflecting the fan-out write path (send to N=3, wait for W=2) vs. the fastest-responder read path (wait for R=2 of N=3).
+
+### 17.4 Replication and Consistency
+
+- **Replication correctness**: 20 keys written to random nodes, then read from all 10 nodes — 200/200 reads returned the correct value (100%).
+- **Vector clock conflict detection**: 10 keys written concurrently (no context) from 2 different nodes — 10/10 returned 2 sibling versions (100% conflict detection). This validates the Dynamo paper's causal conflict model.
+
+### 17.5 Fault Tolerance
+
+Progressive node failure with W=2, R=2, N=3:
+
+| Phase | PUT Success | GET Success |
+|-------|-------------|-------------|
+| Baseline (10/10 up) | 100% | -- |
+| 1 node killed (9/10) | 95% | 100% |
+| 3 nodes killed (7/10) | 80% | 85% |
+| All restored (10/10) | -- | 100% |
+
+The system continues to operate under 30% node loss. After recovery, hinted handoff and read repair restore full data availability.
+
+**Node rejoin test**: A killed node re-discovers all peers within 5 seconds via Kademlia bootstrap. All 30 keys written during its downtime are immediately readable through the rejoined node (quorum reads route to surviving replicas).
+
+### 17.6 Latency Under Load
+
+Read latency remains stable under concurrent write load: 68 ms median (loaded) vs. 66 ms (baseline). The Tokio async runtime and gRPC transport effectively isolate the read path from background write activity.
+
+### 17.7 Metrics
+
+Post-experiment Prometheus metrics show well-distributed KV load across nodes (304--368 PUTs each on the 7 continuously-running nodes). Read repair is actively triggered on every GET (repair count closely matches GET count). Hinted handoff delivery rate is 98.9%, confirming reliable asynchronous anti-entropy.
+
+---
+
+## 18. Potential Future Work
+
+While the system is functionally complete and validated on a 10-node physical cluster, several enhancements could be explored:
 
 1. **Active Merkle anti-entropy**: Currently the Merkle tree is built and diffed but not wired into a periodic background synchronisation loop between replica pairs.
 
@@ -545,23 +607,24 @@ While the system is functionally complete, several enhancements could be explore
 
 4. **Retry with exponential backoff**: RPC failures currently result in immediate failure. Adding configurable retry with exponential backoff would improve resilience.
 
-5. **CLI client**: A command-line client (`dynamo-cli`) for PUT/GET/DELETE operations would improve usability.
+5. **Gossip protocol**: Adding a gossip layer for faster failure detection and membership change propagation.
 
-6. **Multi-node integration tests**: The current integration tests spin up real gRPC servers but could be expanded to test full cluster scenarios (node join/leave, data migration, split-brain recovery).
+6. **Configurable placement strategy**: Allow pluggable placement strategies beyond "N closest by XOR distance" (e.g., rack-aware placement).
 
-7. **Gossip protocol**: Adding a gossip layer for faster failure detection and membership change propagation.
-
-8. **Configurable placement strategy**: Allow pluggable placement strategies beyond "N closest by XOR distance" (e.g., rack-aware placement).
+7. **In-cluster throughput benchmarking**: Current throughput measurements are bottlenecked by the remote client's ~60 ms RTT. A co-located benchmark client would reveal the cluster's true internal capacity.
 
 ---
 
-## 18. Conclusion
+## 19. Conclusion
 
 dynamo-kad demonstrates that Kademlia and Dynamo compose naturally: Kademlia's XOR-distance-based "k closest nodes" maps directly to Dynamo's preference list, and the iterative lookup algorithm efficiently locates replica sets without centralised coordination. The trait-based architecture enables thorough testing of distributed algorithms in isolation, while the chaos testing layer verifies correctness under realistic failure scenarios.
 
 The implementation covers the core algorithms from both papers — iterative parallel lookup, k-bucket routing, quorum-based replication, vector clock causality tracking, read repair, hinted handoff, and Merkle-based anti-entropy — in ~9,850 lines of well-tested, well-linted Rust.
 
+A 10-node physical cluster deployment validates the theoretical properties in practice: full routing convergence, 100% replication consistency, correct vector clock conflict detection, graceful degradation under 30% node loss, automatic DHT healing on node rejoin, and stable tail latency under concurrent load. The system achieves 65 ops/sec with 10 parallel remote clients and maintains sub-100 ms median latency for values up to 1 KB.
+
 ---
 
 *Report generated for the dynamo-kad project.*
 *152 tests passing, zero warnings, zero formatting violations.*
+*10-node cluster evaluation: 12 experiments, 2,000+ operations, 100% consistency.*

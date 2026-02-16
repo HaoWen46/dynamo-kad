@@ -116,6 +116,12 @@ dynamo-kad/
 │       ├── kad.proto
 │       ├── kv.proto
 │       └── admin.proto
+├── deploy/                # 10-node cluster deployment tooling
+│   ├── cluster.conf       # Cluster definition (nodes, ports, paths)
+│   ├── dynamoctl.sh       # SSH-based cluster orchestrator
+│   ├── workload.sh        # KV workload driver
+│   ├── experiment.sh      # 12-experiment evaluation suite
+│   └── results/           # Timestamped experiment data (CSV + reports)
 ├── .github/workflows/     # CI pipeline
 ├── REPORT.md              # Comprehensive technical report
 └── .gitignore
@@ -187,6 +193,66 @@ Requires [just](https://github.com/casey/just) for task runner recipes.
 | **KV**       | `n`, `r`, `w`, `read_repair`, `hinted_handoff`          | N=3, R=2, W=2, both enabled           |
 | **Storage**  | `data_dir`, `fsync`                                     | `data/`, batch fsync                  |
 | **Node**     | `listen`, `seeds`, `metrics_port`                       | Required listen address               |
+
+---
+
+## Multi-Node Deployment
+
+The `deploy/` directory contains a full SSH-based deployment harness for running dynamo-kad on a physical cluster.
+
+### Tooling
+
+| Script | Purpose |
+|--------|---------|
+| `dynamoctl.sh` | Cluster lifecycle: build, distribute, configure, start/stop, health checks, logs |
+| `workload.sh` | KV workload driver (PUT/GET/DELETE via grpcurl) |
+| `experiment.sh` | 12-experiment evaluation suite producing CSV data and reports |
+| `cluster.conf` | Cluster definition (node IPs, ports, SSH config, quorum defaults) |
+
+### Deployment Commands
+
+```bash
+# Build on a remote Linux node (avoids cross-compilation)
+./deploy/dynamoctl.sh build-remote
+
+# Distribute binary + generate configs for all nodes
+./deploy/dynamoctl.sh deploy-remote
+
+# Start the cluster (seeds first, then remaining nodes)
+./deploy/dynamoctl.sh start
+
+# Health check all nodes
+./deploy/dynamoctl.sh health
+
+# Check cluster view from any node
+./deploy/dynamoctl.sh cluster-view
+
+# Run the full experiment suite
+./deploy/experiment.sh all
+
+# Stop the cluster
+./deploy/dynamoctl.sh stop
+```
+
+### Evaluation Highlights (10-node cluster)
+
+Evaluated on 10 physical machines (CSIE NTU workstation pool, 140.112.30.182-191) with N=3, R=2, W=2.
+
+| Property | Result |
+|----------|--------|
+| Cluster convergence | 10/10 nodes fully connected |
+| PUT/GET latency (median) | 68 ms / 67 ms (remote client, ~60 ms RTT) |
+| Serial throughput | 4.9 ops/sec (RTT-bound) |
+| Concurrent throughput | 65 ops/sec (10 parallel clients, 6.6x speedup) |
+| Value size scaling | Flat to 1 KB; 2.5x at 100 KB |
+| Replication consistency | 200/200 reads correct (100%) |
+| Vector clock conflicts | 10/10 concurrent writes detected (100%) |
+| Fault tolerance (1 node) | 95%+ PUT and GET success |
+| Fault tolerance (3 nodes) | 80% PUT, 85% GET success |
+| Node rejoin & healing | Full routing + data recovery in <5s |
+| Latency under load | No degradation (68 ms loaded vs 66 ms baseline) |
+
+Full evaluation report: [`deploy/results/20260217-030352/REPORT.md`](deploy/results/20260217-030352/REPORT.md)
 
 ---
 

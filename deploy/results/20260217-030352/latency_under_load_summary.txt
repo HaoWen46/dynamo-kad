@@ -1,0 +1,10 @@
+Latency Under Load Results
+============================
+Background load: 2 concurrent writers x 20 PUTs each
+Probe count: 20 GETs per phase
+
+Baseline (no load): min=60 median=66 mean=72.2 p95=177 max=177 stdev=25.1
+Under load:         min=61 median=68 mean=67.0 p95=71 max=71 stdev=2.9
+
+Note: Background load is limited by serial grpcurl calls per client.
+Real load is ~2 concurrent PUT streams during the under_load phase.

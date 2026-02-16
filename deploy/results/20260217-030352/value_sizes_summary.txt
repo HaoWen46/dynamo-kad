@@ -1,0 +1,9 @@
+Value Size Scaling Results
+===========================
+Trials per size: 10 PUTs + 10 GETs
+
+1B: PUT [median=66 mean=70.4 stdev=11.4] (10/10)  GET [median=66 mean=66.4 stdev=4.6] (10/10)
+100B: PUT [median=66 mean=64.5 stdev=4.7] (10/10)  GET [median=65 mean=65.9 stdev=4.4] (10/10)
+1KB: PUT [median=67 mean=67.6 stdev=3.1] (10/10)  GET [median=67 mean=66.7 stdev=3.8] (10/10)
+10KB: PUT [median=84 mean=160.3 stdev=130.6] (10/10)  GET [median=79 mean=79.1 stdev=3.4] (10/10)
+100KB: PUT [median=162 mean=149.9 stdev=21.3] (10/10)  GET [median=108 mean=117.3 stdev=34.3] (10/10)

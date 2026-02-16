@@ -1,0 +1,9 @@
+Replication Verification Results
+================================
+Keys written: 20
+Nodes in cluster: 10
+Total reads: 200
+Found (success=true): 200/200
+Consistent (correct value): 200/200
+Replication factor: N=3
+Read quorum: R=2

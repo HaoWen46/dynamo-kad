@@ -25,5 +25,7 @@ Thumbs.db
 # Generated deployment configs (from dynamoctl gen-config-local)
 /deploy/generated/
 
-# Experiment results (large, per-run)
-/deploy/results/
+# Experiment results — track the final comprehensive run, ignore the rest
+/deploy/results/*
+!/deploy/results/20260217-030352/
+/deploy/results/20260217-030352/prometheus_*.txt

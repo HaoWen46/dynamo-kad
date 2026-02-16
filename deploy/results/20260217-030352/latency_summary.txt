@@ -1,0 +1,10 @@
+Latency Profiling Results
+=========================
+Operations: 100 PUTs + 100 GETs
+Quorum: W=2, R=2, N=3
+
+PUT latency (ms): min=59,max=927,mean=88.9,median=68.0,p95=93,p99=927,stdev=125.4
+PUT success: 100/100
+
+GET latency (ms): min=61,max=82,mean=67.2,median=67.0,p95=73,p99=82,stdev=3.4
+GET success: 100/100

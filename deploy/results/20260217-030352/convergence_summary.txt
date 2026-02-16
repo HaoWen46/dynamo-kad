@@ -1,0 +1,17 @@
+Cluster Convergence Results
+===========================
+Total nodes: 10
+Expected peers per node: 9
+Fully converged nodes: 10/10
+
+node,known_peers,expected_peers,complete
+140.112.30.182,10,9,true
+140.112.30.183,10,9,true
+140.112.30.184,10,9,true
+140.112.30.185,9,9,true
+140.112.30.186,9,9,true
+140.112.30.187,9,9,true
+140.112.30.188,9,9,true
+140.112.30.189,10,9,true
+140.112.30.190,10,9,true
+140.112.30.191,10,9,true

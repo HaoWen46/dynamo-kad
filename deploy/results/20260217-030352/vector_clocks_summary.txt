@@ -1,0 +1,12 @@
+Vector Clock Conflict Detection Results
+=========================================
+Keys tested: 10
+Conflicts detected (>1 version): 10/10
+Conflict rate: 100.0%
+
+Methodology:
+- Two concurrent PUTs to the same key from different nodes
+- No context passed (independent causal chains)
+- Expected: vector clocks should detect concurrency and store siblings
+- Conflict presence depends on timing: if one write propagates before
+  the other arrives, the second write may dominate instead of conflicting
